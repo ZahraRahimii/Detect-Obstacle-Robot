@@ -1,6 +1,6 @@
 # Detect Obstacle Robot
 
-To detect obstacle in [the detect_obstacles.world](https://github.com/ZahraRahimii/Detect-Obstacle-Robot/blob/main/detect_obstacles.world) we need two nodes:
+To detect obstacle in the [detect_obstacles.world](https://github.com/ZahraRahimii/Detect-Obstacle-Robot/blob/main/detect_obstacles.world) we need two nodes:
 
 ## Sensor Node: 
 This node should read the distance of the robot to the obstacles using the LiDAR sensor and the LaserScan topic and always send the details of the closest obstacle, including the distance and angle, on the ClosestObstacle topic. This topic also needs a [custom message](https://github.com/ZahraRahimii/Detect-Obstacle-Robot/blob/main/msg/custom_msg.msg).
