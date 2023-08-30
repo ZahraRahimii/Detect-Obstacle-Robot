@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <node pkg="homework2" type="control.py" name="controller" output="screen"></node>
+  <node pkg="homework2" type="sensor.py" name="sensor"></node>
+  <!-- <node name="rviz" type="rviz" pkg="rviz" respawn="false" args="-d $(find )" -->
+
+  <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_detect_obstacles.launch">
+    <arg name="x_pos" default="0"/>
+    <arg name="y_pos" default="0"/>
+    <arg name="z_pos" default="0.0"/>
+    <arg name="yaw" default="0.75"/>
+  </include>
+  <!-- <include file="$(find turtlebot_rviz_launchers)/launch/view_robot.launch"></include> -->
+
+</launch>

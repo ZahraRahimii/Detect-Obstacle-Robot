@@ -1,0 +1,326 @@
+
+# !/usr/bin/python3
+
+# import rospy
+# from nav_msgs.msg import Odometry, Path
+# from geometry_msgs.msg import PoseStamped
+
+
+# class Sensor:
+    
+#     def __init__(self) -> None:
+        
+#         rospy.init_node("monitor" , anonymous=False)
+        
+#         self.path = Path()
+#         self.odom_subscriber = rospy.Subscriber("/odom" , Odometry , callback=self.odom_callback)
+#         self.path_publisher = rospy.Publisher("/path" , Path , queue_size=10)
+        
+        
+        
+        
+    
+#     def odom_callback(self, msg : Odometry):
+#         self.path.header = msg.header
+#         pose = PoseStamped()
+#         pose.header = msg.header
+#         pose.pose = msg.pose.pose
+#         self.path.poses.append(pose)
+#         self.path_publisher.publish(self.path)
+        
+        
+# if __name__ == "__main__":
+#     path_monitor = Sensor()
+    
+#     rospy.spin()
+
+
+# import rospy
+# from nav_msgs.msg import Odometry
+# from homework2.msg import custom_msg
+# import math
+# # from obstacle_avoidance.srv import GetDistance,GetDistanceResponse
+
+
+# class ClosestObstacle:
+    
+#     def __init__(self) -> None:
+        
+#         rospy.init_node("closest_obstacle_node" , anonymous=True)
+#         # rospy.loginfo("waiting for get distance")
+#         # rospy.wait_for_service('get_distance')
+        
+#         # self.getDistService = rospy.ServiceProxy('get_distance', GetDistance)
+
+#         self.odom_subscriber = rospy.Subscriber("/odom" , Odometry , callback=self.read_distance)
+#         self.obstacle_publisher = rospy.Publisher('/ClosestObstacle' , custom_msg , queue_size=10)
+        
+#         self.obstacles={
+#             "bookshelf" : (2.64, -1.55),
+#             "dumpster" :  (1.23, -4.57),
+#             "barrel" :    (-2.51, -3.08),
+#             "postbox" :   (-4.47, -0.57),
+#             "brick_box"	: (-3.44, 2.75),
+#             "cabinet" :	  (-0.45, 4.05),
+#             "cafe_table": (1.91, 3.37),
+#             "fountain" :  (4.08, 1.14)
+#         }
+        
+
+#     def read_distance(self,odom):
+#         pose_x = odom.pose.pose.position.x
+#         pose_y = odom.pose.pose.position.y
+        
+#         min_distance = 100000
+#         for obstacle,obs_pos in self.obstacles.items():    
+#             distance = math.sqrt(((pose_x - obs_pos[0]) ** 2) + ((pose_y - obs_pos[1]) ** 2))
+#             if distance < min_distance:
+#                 closest = obstacle
+#                 min_distance = distance
+#         obs=custom_msg()
+#         obs.obstacle_name=closest
+#         obs.distance=min_distance
+#         # rospy.loginfo(f"closest: {closest} {min_distance}")
+#         self.obstacle_publisher.publish(obs)
+
+#     # #with service
+#     # def read_distance(self):
+#     #     min_distance = 100000
+#     #     for obstacle in self.obstacles.keys():    
+#     #         res = self.getDistService(obstacle)
+#     #         distance = res.distance
+#     #         if distance < min_distance:
+#     #             closest = obstacle
+#     #             min_distance = distance
+#     #     obs=Obs()
+#     #     obs.obstacle_name=closest
+#     #     obs.distance=min_distance
+#     #     rospy.loginfo(f"closest: {closest} {min_distance}")
+#     #     self.obstacle_publisher.publish(obs)
+
+    
+
+# if __name__ == "__main__":
+#     co = ClosestObstacle()
+#     # while True:
+#     #     co.read_distance()
+#     rospy.spin()
+
+
+
+
+
+
+
+
+
+
+# from rospkg import RosPack
+# import rospy
+# from nav_msgs.msg import Odometry
+# from homework2.msg import custom_msg
+# from math import radians,pi
+# from sensor_msgs.msg import LaserScan
+# import numpy as np
+# import tf
+# from geometry_msgs.msg import Twist
+
+
+# class AvoidObstacleNode:
+    
+#     def __init__(self) -> None:
+        
+#         rospy.init_node("avoid_obstacle_node" , anonymous=True)
+#         # rospy.wait_for_service('closest_obstacle_node')
+        
+#         # self.obstacle_publisher = rospy.Subscriber('/ClosestObstacle' , Obst ,callback=self.check_distance)
+#         self.cmd_publisher = rospy.Publisher('/cmd_vel' , Twist , queue_size=10)
+        
+#         self.obstacles={
+#             "bookshelf" : (2.64, -1.55),
+#             "dumpster" :  (1.23, -4.57),
+#             "barrel" :    (-2.51, -3.08),
+#             "postbox" :   (-4.47, -0.57),
+#             "brick_box"	: (-3.44, 2.75),
+#             "cabinet" :	  (-0.45, 4.05),
+#             "cafe_table": (1.91, 3.37),
+#             "fountain" :  (4.08, 1.14)
+#         }
+#         self.angular_speed=0.1
+    
+#     def angular_error(self, diff):
+#         if diff < -pi:
+#             return diff+ 2 * pi
+#         if diff > pi:
+#             return diff - 2 * pi
+#         return diff
+        
+#     def get_heading(self):
+#         msg = rospy.wait_for_message("/odom" , Odometry)
+#         orientation = msg.pose.pose.orientation
+#         self.pose_x= msg.pose.pose.position.x
+#         self.pose_y= msg.pose.pose.position.y
+#         roll, pitch, yaw = tf.transformations.euler_from_quaternion((
+#             orientation.x ,orientation.y ,orientation.z ,orientation.w
+#         )) 
+#         self.yaw = yaw
+#         return yaw
+
+#     def rotate(self,remaining):
+#         rospy.loginfo(f"rotating {remaining} radians")
+#         prev_angle = self.get_heading()
+#         twist = Twist()
+#         twist.angular.z = self.angular_speed
+#         self.cmd_publisher.publish(twist)
+        
+#         # rotation loop
+#         while remaining >= 0.01:
+#             current_angle = self.get_heading()  
+#             delta = abs(prev_angle - current_angle)
+#             delta=self.angular_error(delta)
+#             remaining -= delta
+#             prev_angle = current_angle
+#             print(remaining)
+
+#         self.cmd_publisher.publish(Twist())
+#         rospy.sleep(1)
+
+#     def check_distance(self):
+#         while not rospy.is_shutdown():
+#             obs=  custom_msg(rospy.wait_for_message('/ClosestObstacle' , custom_msg ))
+#             rospy.loginfo(obs.distance)
+#             if obs.distance<2:
+#                 rospy.loginfo("got too close!")
+#                 ##stop
+#                 twist = Twist()
+#                 twist.linear.x = 0
+#                 self.cmd_publisher.publish(twist)
+#                 # self.cmd_publisher.publish(Twist())
+#                 rospy.sleep(1)
+#                 msg = rospy.wait_for_message("/scan" , LaserScan, timeout=1)
+#                 ranges=np.array(msg.ranges)
+#                 min_ind=np.argmin(ranges)
+                
+#                 rospy.loginfo(min_ind)
+#                 rospy.loginfo(180-min_ind)
+                
+#                 remaining = self.angular_error(radians(180-min_ind))
+#                 self.rotate(remaining)
+
+
+# if __name__ == "__main__":
+#     co = AvoidObstacleNode()
+#     co.check_distance()
+
+
+# import rospy
+# import tf
+
+# from sensor_msgs.msg import LaserScan
+# from nav_msgs.msg import Odometry
+# from geometry_msgs.msg import Twist
+# from nav_msgs.msg import Odometry, Path
+# from geometry_msgs.msg import PoseStamped
+
+# from math import radians
+
+# class Controller:
+    
+#     def __init__(self) -> None:
+        
+#         rospy.init_node("control" , anonymous=False)
+#         self.o_direction = 0
+#         self.o_distance = 0
+
+#         self.control_subscriber = rospy.Subscriber("/closest_obstacle" , custom_msg , callback=self.control_callback)
+#         self.cmd_publisher = rospy.Publisher('/cmd_vel', Twist , queue_size=10)
+        
+#         # getting specified parameters
+#         # self.linear_speed = rospy.get_param("/controller/linear_speed") # m/s
+#         # self.angular_speed = rospy.get_param("/controller/angular_speed") # rad/s
+#         # self.goal_angle = radians(rospy.get_param("/controller/goal_angle")) # rad
+#         # self.stop_distance = rospy.get_param("/controller/stop_distance") # m
+#         # self.epsilon = rospy.get_param("/controller/epsilon")
+
+#         self.linear_speed = 0.2 # m/s
+#         self.angular_speed = 0.2 # r/s
+#         self.goal_angle = -(180 - self.o_direction) # rad
+#         self.stop_distance = 2 # m
+#         self.epsilon = 0.0001
+        
+#         # defining the states of our robot
+#         self.GO, self.ROTATE = 0, 1
+#         self.state = self.GO 
+         
+        
+#     # checks whether there is an obstacle in front of the robot
+#     # or not
+#     def control_callback(self, msg: custom_msg):
+#         self.o_direction = msg.direction
+#         self.o_distance = msg.distance
+#         '''I don't know wether this statmenet in important or not'''
+#         # if msg.ranges[0] <= self.stop_distance:
+#             # self.state = self.ROTATE
+    
+#     # heading of the robot 
+#     def get_heading(self):
+
+#         # waiting for the most recent message from topic /odom
+#         msg = rospy.wait_for_message("/odom" , Odometry)
+        
+#         orientation = msg.pose.pose.orientation
+
+#         # convert quaternion to odom
+#         roll, pitch, yaw = tf.transformations.euler_from_quaternion((
+#             orientation.x ,orientation.y ,orientation.z ,orientation.w
+#         )) 
+        
+#         return yaw
+    
+#     def run(self):
+        
+#         while not rospy.is_shutdown():
+            
+#             # check whether state is changed or not
+#             if self.state == self.GO:
+#                 twist = Twist()
+#                 # twist.direction = self.o_direction
+#                 # twist.distance = self.o_distance
+                
+#                 twist.linear.x = self.linear_speed
+#                 self.cmd_publisher.publish(twist)
+#                 rospy.sleep(1)
+#                 # self.o_direction
+#                 ''''''
+#                 # if self.o_distance < self.stop_distance:
+#                     # self.state = self.ROTATE
+                
+#             else:
+#                 self.cmd_publisher.publish(Twist())
+        
+#                 rospy.sleep(1)
+                
+#                 remaining = self.goal_angle
+#                 prev_angle = self.get_heading()
+                
+#                 twist = Twist()
+#                 twist.angular.z = self.angular_speed
+#                 self.cmd_publisher.publish(twist)
+                
+#                 # rotation loop
+#                 while remaining >= self.epsilon:
+#                     current_angle = self.get_heading()
+#                     delta = abs(prev_angle - current_angle)
+#                     remaining -= delta
+#                     prev_angle = current_angle
+                
+#                 self.cmd_publisher.publish(Twist())
+
+#                 rospy.sleep(1)
+                
+#                 self.state = self.GO              
+        
+# if __name__ == "__main__":
+#     controller = Controller()
+    
+#     controller.run()
