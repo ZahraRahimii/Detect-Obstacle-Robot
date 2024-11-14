@@ -1,4 +1,4 @@
-# Detect Obstacle Robot
+# Robot Obstacle Detection
 
 To detect obstacle in the [detect_obstacles.world](https://github.com/ZahraRahimii/Detect-Obstacle-Robot/blob/main/detect_obstacles.world) we need two nodes:
 
